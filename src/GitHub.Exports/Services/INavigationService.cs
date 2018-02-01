@@ -1,21 +1,16 @@
-﻿using Microsoft.VisualStudio.TextManager.Interop;
+﻿using System.Collections.Generic;
 
 namespace GitHub.Services
 {
     public interface INavigationService
     {
         /// <summary>
-        /// Find the active text view.
+        /// Find the closest matching line in <see cref="toLines"/>.
         /// </summary>
-        /// <returns>The active view or null if view can't be found.</returns>
-        IVsTextView FindActiveView();
-
-        /// <summary>
-        /// Navigate to and place the caret at the best guess equivalent position in <see cref="targetFile"/>.
-        /// </summary>
-        /// <param name="sourceView">The text view to navigate from.</param>
-        /// <param name="targetFile">The text view to open and navigate to.</param>
-        /// <returns>The opened text view.</returns>
-        IVsTextView NavigateToEquivalentPosition(IVsTextView sourceView, string targetFile);
+        /// <param name="fromLines">The document we're navigating from.</param>
+        /// <param name="toLines">The document we're navigating to.</param>
+        /// <param name="line">The 0-based line we're navigating from.</param>
+        /// <returns>The best matching line in <see cref="toLines"/></returns>
+        int FindMatchingLine(IList<string> fromLines, IList<string> toLines, int line, int matchLinesAbove = 0);
     }
 }
