@@ -3,7 +3,7 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
 
-namespace GitHub.VisualStudio.Views.GitHubPane
+namespace GitHub.Services
 {
     /// <summary>
     /// Used to filter commands send to <see cref="IVsTextView"/> dispatch them to a <see cref="Exec"/> event. 

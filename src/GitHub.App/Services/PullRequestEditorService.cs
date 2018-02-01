@@ -14,6 +14,7 @@ using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Projection;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Task = System.Threading.Tasks.Task;
@@ -32,6 +33,7 @@ namespace GitHub.Services
         readonly IVsEditorAdaptersFactoryService vsEditorAdaptersFactory;
         readonly IStatusBarNotificationService statusBar;
         readonly IUsageTracker usageTracker;
+        readonly INavigationService navigationService;
 
         [ImportingConstructor]
         public PullRequestEditorService(
@@ -39,19 +41,22 @@ namespace GitHub.Services
             IPullRequestService pullRequestService,
             IVsEditorAdaptersFactoryService vsEditorAdaptersFactory,
             IStatusBarNotificationService statusBar,
-            IUsageTracker usageTracker)
+            IUsageTracker usageTracker,
+            INavigationService navigationService)
         {
             Guard.ArgumentNotNull(serviceProvider, nameof(serviceProvider));
             Guard.ArgumentNotNull(pullRequestService, nameof(pullRequestService));
             Guard.ArgumentNotNull(vsEditorAdaptersFactory, nameof(vsEditorAdaptersFactory));
             Guard.ArgumentNotNull(statusBar, nameof(statusBar));
             Guard.ArgumentNotNull(usageTracker, nameof(usageTracker));
+            Guard.ArgumentNotNull(navigationService, nameof(navigationService));
 
             this.serviceProvider = serviceProvider;
             this.pullRequestService = pullRequestService;
             this.vsEditorAdaptersFactory = vsEditorAdaptersFactory;
             this.statusBar = statusBar;
             this.usageTracker = usageTracker;
+            this.navigationService = navigationService;
         }
 
         /// <inheritdoc/>
@@ -79,6 +84,9 @@ namespace GitHub.Services
                     if (!workingDirectory)
                     {
                         AddBufferTag(buffer, session, fullPath, null);
+
+                        var textView = navigationService.FindActiveView();
+                        EnableNavigateToEditor(textView, session, file);
                     }
                 }
 
@@ -147,6 +155,10 @@ namespace GitHub.Services
                 if (!workingDirectory)
                 {
                     AddBufferTag(diffViewer.RightView.TextBuffer, session, rightPath, DiffSide.Right);
+
+                    EnableNavigateToEditor(diffViewer.LeftView, session, file);
+                    EnableNavigateToEditor(diffViewer.RightView, session, file);
+                    EnableNavigateToEditor(diffViewer.InlineView, session, file);
                 }
 
                 if (workingDirectory)
@@ -186,6 +198,59 @@ namespace GitHub.Services
                 PkgCmdIDList.NextInlineCommentId,
                 ref param,
                 null);
+        }
+
+        void EnableNavigateToEditor(IWpfTextView textView, IPullRequestSession session, IPullRequestSessionFile file)
+        {
+            var view = vsEditorAdaptersFactory.GetViewAdapter(textView);
+            EnableNavigateToEditor(view, session, file);
+        }
+
+        void EnableNavigateToEditor(IVsTextView textView, IPullRequestSession session, IPullRequestSessionFile file)
+        {
+            var commandGroup = VSConstants.CMDSETID.StandardCommandSet2K_guid;
+            var commandId = (int)VSConstants.VSStd2KCmdID.RETURN;
+            new TextViewCommandDispatcher(textView, commandGroup, commandId).Exec += async (s, e) => await NavigateToEditor(session, file);
+
+            var contextMenuCommandGroup = new Guid(Guids.guidContextMenuSetString);
+            var goToCommandId = PkgCmdIDList.openFileInSolutionCommand;
+            new TextViewCommandDispatcher(textView, contextMenuCommandGroup, goToCommandId).Exec += async (s, e) => await NavigateToEditor(session, file);
+        }
+
+        async Task NavigateToEditor(IPullRequestSession session, IPullRequestSessionFile file)
+        {
+            try
+            {
+                if (!session.IsCheckedOut)
+                {
+                    ShowInfoMessage("Checkout PR branch before opening file in solution.");
+                    return;
+                }
+
+                var fullPath = GetAbsolutePath(session, file);
+
+                var activeView = navigationService.FindActiveView();
+                if (activeView == null)
+                {
+                    statusBar.ShowError("Couldn't find active view");
+                    return;
+                }
+
+                navigationService.NavigateToEquivalentPosition(activeView, fullPath);
+
+                await usageTracker.IncrementCounter(x => x.NumberOfPRDetailsNavigateToEditor);
+            }
+            catch (Exception e)
+            {
+                ShowErrorInStatusBar("Error navigating to editor", e);
+            }
+        }
+
+        void ShowInfoMessage(string message)
+        {
+            ErrorHandler.ThrowOnFailure(VsShellUtilities.ShowMessageBox(
+                serviceProvider, message, null,
+                OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST));
         }
 
         void AddBufferTag(ITextBuffer buffer, IPullRequestSession session, string path, DiffSide? side)
