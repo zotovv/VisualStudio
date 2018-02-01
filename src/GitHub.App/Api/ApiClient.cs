@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -9,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text;
 using GitHub.Extensions;
 using GitHub.Logging;
+using GitHub.Models;
 using GitHub.Primitives;
 using Octokit;
 using Octokit.Reactive;
@@ -46,6 +48,32 @@ namespace GitHub.Api
             var client = gitHubClient.Repository;
 
             return (isUser ? client.Create(repository) : client.Create(login, repository));
+        }
+
+        public IObservable<PullRequestReview> PostPullRequestReview(
+            string owner,
+            string name,
+            int number,
+            string commitId,
+            string body,
+            PullRequestReviewEvent e,
+            IEnumerable<IPullRequestReviewCommentModel> comments)
+        {
+            Guard.ArgumentNotEmptyString(owner, nameof(owner));
+            Guard.ArgumentNotEmptyString(name, nameof(name));
+
+            var review = new PullRequestReviewCreate
+            {
+                Body = body,
+                CommitId = commitId,
+                Event = e,
+                Comments = comments.Select(x => new DraftPullRequestReviewComment(
+                    x.Body,
+                    x.Path,
+                    x.Position.Value)).ToList(),
+            };
+
+            return gitHubClient.PullRequest.Review.Create(owner, name, number, review);
         }
 
         public IObservable<PullRequestReviewComment> CreatePullRequestReviewComment(
@@ -228,6 +256,14 @@ namespace GitHub.Api
             return gitHubClient.PullRequest.Files(owner, name, number);
         }
 
+        public IObservable<PullRequestReview> GetPullRequestReviews(string owner, string name, int number)
+        {
+            Guard.ArgumentNotEmptyString(owner, nameof(owner));
+            Guard.ArgumentNotEmptyString(name, nameof(name));
+
+            return gitHubClient.PullRequest.Review.GetAll(owner, name, number);
+        }
+
         public IObservable<PullRequestReviewComment> GetPullRequestReviewComments(string owner, string name, int number)
         {
             Guard.ArgumentNotEmptyString(owner, nameof(owner));
@@ -268,11 +304,7 @@ namespace GitHub.Api
             Guard.ArgumentNotEmptyString(owner, nameof(owner));
             Guard.ArgumentNotEmptyString(repo, nameof(repo));
 
-#pragma warning disable CS0618
-            // GetAllBranches is obsolete, but don't want to introduce the change to fix the
-            // warning in the PR, so disabling for now.
-            return gitHubClient.Repository.GetAllBranches(owner, repo);
-#pragma warning restore
+            return gitHubClient.Repository.Branch.GetAll(owner, repo);
         }
 
         public IObservable<Repository> GetRepository(string owner, string repo)

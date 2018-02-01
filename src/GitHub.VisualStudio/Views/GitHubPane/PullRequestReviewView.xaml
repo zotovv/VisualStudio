@@ -1,0 +1,131 @@
+﻿<local:GenericPullRequestReviewView x:Class="GitHub.VisualStudio.Views.GitHubPane.PullRequestReviewView"
+                                    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                                    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                                    xmlns:cache="clr-namespace:GitHub.UI.Helpers;assembly=GitHub.UI"
+                                    xmlns:local="clr-namespace:GitHub.VisualStudio.Views.GitHubPane"
+                                    xmlns:markdig="clr-namespace:Markdig.Wpf;assembly=Markdig.Wpf"
+                                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                                    xmlns:ui="clr-namespace:GitHub.UI;assembly=GitHub.UI"
+                                    xmlns:c="clr-namespace:GitHub.VisualStudio.UI.Controls;assembly=GitHub.VisualStudio.UI"
+                                    xmlns:models="clr-namespace:GitHub.Models;assembly=GitHub.App"
+                                    xmlns:sampleData="clr-namespace:GitHub.SampleData;assembly=GitHub.App"
+                                    Background="{DynamicResource GitHubVsToolWindowBackground}"
+                                    Foreground="{DynamicResource GitHubVsWindowText}"
+                                    mc:Ignorable="d" d:DesignWidth="356" d:DesignHeight="800"
+                                    x:Name="root">
+    <d:DesignProperties.DataContext>
+        <sampleData:PullRequestReviewViewModelDesigner IsPending="True"/>
+    </d:DesignProperties.DataContext>
+
+    <Control.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <cache:SharedDictionaryManager Source="pack://application:,,,/GitHub.VisualStudio.UI;component/SharedDictionary.xaml" />
+                <cache:SharedDictionaryManager Source="pack://application:,,,/GitHub.UI;component/SharedDictionary.xaml" />
+                <cache:SharedDictionaryManager Source="pack://application:,,,/GitHub.UI.Reactive;component/SharedDictionary.xaml" />
+                <cache:SharedDictionaryManager Source="pack://application:,,,/GitHub.UI;component/Assets/Markdown.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Control.Resources>
+
+    <StackPanel Margin="8,0">
+
+        <!-- Existing review -->
+        <StackPanel Visibility="{Binding IsPending, Converter={ui:BooleanToInverseVisibilityConverter}}">
+            <StackPanel DockPanel.Dock="Top" Margin="0 4" Orientation="Horizontal">
+                <c:AccountAvatar Account="{Binding Model.User}" Margin="4" Width="24" Height="24"/>
+                <TextBlock FontSize="16" Margin="2 0 2 1" VerticalAlignment="Center">
+                <Run FontWeight="Bold" Text="{Binding Model.User.Login, Mode=OneWay}"/>
+                <Run Text="{Binding State, Mode=OneWay}"/>
+                <Hyperlink Command="{Binding NavigateToPullRequest}">
+                    <Run>#</Run><Run Text="{Binding PullRequestNumber, Mode=OneWay}"/>
+                </Hyperlink>
+                </TextBlock>
+            </StackPanel>
+
+            <markdig:MarkdownViewer Margin="0 4" Markdown="{Binding Body}"/>
+        </StackPanel>
+
+        <!-- Pending review -->
+        <StackPanel Visibility="{Binding IsPending, Converter={ui:BooleanToVisibilityConverter}}">
+            <TextBlock FontSize="16" Margin="0 4">Submit your review</TextBlock>
+            <TextBlock Margin="0 4">Review summary</TextBlock>
+            <TextBox AcceptsReturn="True"
+                     Margin="0 4"
+                     MinHeight="120"
+                     Padding="0 4"
+                     TextWrapping="Wrap"
+                     Text="{Binding Body}"/>
+            <StackPanel Margin="0 4" Orientation="Horizontal">
+                <ui:LinkDropDown Header="Submit review">
+                    <ui:GitHubActionLink Command="{Binding Submit}" CommandParameter="Comment">Comment only</ui:GitHubActionLink>
+                    <ui:GitHubActionLink Command="{Binding Submit}" CommandParameter="Approve">Approve</ui:GitHubActionLink>
+                    <ui:GitHubActionLink Command="{Binding Submit}" CommandParameter="RequestChanges">Request changes</ui:GitHubActionLink>
+                </ui:LinkDropDown>
+                <Rectangle Fill="{DynamicResource GitHubHeaderSeparatorBrush}" Width="1" Height="16" Margin="4 0"/>
+                <ui:GitHubActionLink VerticalAlignment="Center">Cancel</ui:GitHubActionLink>
+            </StackPanel>
+        </StackPanel>
+
+        <TabControl Margin="0 16 0 0" Style="{DynamicResource GitHubPRDetailsTabControl}">
+            <TabControl.Resources>
+                <DataTemplate DataType="{x:Type models:PullRequestReviewCommentModel}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <ui:OcticonImage Grid.Column="0" 
+                                         Icon="comment"
+                                         Margin="0 2 2 0"/>
+                        <TextBlock Grid.Column="1"
+                                   Margin="0 2"              
+                                   TextTrimming="CharacterEllipsis">
+                            <Hyperlink Command="{Binding DataContext.OpenComment, ElementName=root}"
+                                       CommandParameter="{Binding}">
+                                <Hyperlink.Style>
+                                    <Style TargetType="Hyperlink">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Position}" Value="{x:Null}">
+                                                <Setter Property="IsEnabled" Value="False"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Hyperlink.Style>
+                                <Run Text="{Binding Body, Converter={ui:TrimNewlinesConverter}, Mode=OneWay}"/>
+                            </Hyperlink>
+                        </TextBlock>
+                        <TextBlock Grid.Column="1" Grid.Row="1"
+                                   Opacity="0.5"
+                                   Text="{Binding Path}"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </Grid>
+                </DataTemplate>
+            </TabControl.Resources>
+            <TabItem Header="{Binding Files.ChangedFilesCount}"
+                     HeaderStringFormat="Files changed ({0})"
+                     Style="{DynamicResource GitHubPRDetailsTabItem}">
+                <local:PullRequestFilesView DataContext="{Binding Files}"/>
+            </TabItem>
+            <TabItem Header="{Binding CommentCount}"
+                     HeaderStringFormat="File comments ({0})"
+                     Style="{DynamicResource GitHubPRDetailsTabItem}">
+                <StackPanel>
+                    <ItemsControl ItemsSource="{Binding FileComments}"/>
+                    <ui:SectionControl HeaderText="{Binding OutdatedFileComments.Count, StringFormat=Outdated ({0})}"
+                                       IsExpanded="False"
+                                       Margin="0 8 0 0"
+                                       Visibility="{Binding OutdatedFileComments.Count, Converter={ui:CountToVisibilityConverter}}">
+                        <ItemsControl ItemsSource="{Binding OutdatedFileComments}"/>
+                    </ui:SectionControl>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </StackPanel>
+
+</local:GenericPullRequestReviewView>

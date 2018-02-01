@@ -89,6 +89,7 @@
       <DependentUpon>Spinner.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\AllCapsConverter.cs" />
+    <Compile Include="Converters\NotEqualsToVisibilityConverter.cs" />
     <Compile Include="Converters\EqualsToVisibilityConverter.cs" />
     <Compile Include="Converters\MultiBooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\NullToVisibilityConverter.cs" />
@@ -96,6 +97,7 @@
     <Compile Include="Converters\CountToVisibilityConverter.cs" />
     <Compile Include="Converters\DefaultValueConverter.cs" />
     <Compile Include="Converters\StickieListItemConverter.cs" />
+    <Compile Include="Converters\TrimNewlinesConverter.cs" />
     <Compile Include="Helpers\LoadingResourceDictionary.cs" />
     <Compile Include="Helpers\ScrollViewerUtilities.cs" />
     <Compile Include="Helpers\SharedDictionaryManager.cs" />

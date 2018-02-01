@@ -18,6 +18,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Projection;
 using ReactiveUI;
 using Serilog;
+using PullRequestReviewEvent = Octokit.PullRequestReviewEvent;
 
 namespace GitHub.InlineReviews.Services
 {
@@ -290,6 +291,39 @@ namespace GitHub.InlineReviews.Services
                 .ObserveOn(RxApp.MainThreadScheduler)
                 .Subscribe(x));
             return Subject.Create(input, output);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IPullRequestReviewModel> PostReview(
+            ILocalRepositoryModel localRepository,
+            string remoteRepositoryOwner,
+            IAccount user,
+            int number,
+            string commitId,
+            string body,
+            PullRequestReviewEvent e,
+            IEnumerable<IPullRequestReviewCommentModel> comments)
+        {
+            var address = HostAddress.Create(localRepository.CloneUrl.Host);
+            var apiClient = await apiClientFactory.Create(address);
+
+            var result = await apiClient.PostPullRequestReview(
+                remoteRepositoryOwner,
+                localRepository.Name,
+                number,
+                commitId,
+                body,
+                e,
+                comments);
+
+            return new PullRequestReviewModel
+            {
+                Id = result.Id,
+                Body = result.Body,
+                CommitId = result.CommitId,
+                State = result.State.Value,
+                User = user,
+            };
         }
 
         /// <inheritdoc/>

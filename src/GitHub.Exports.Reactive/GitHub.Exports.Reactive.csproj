@@ -115,12 +115,14 @@
     <Compile Include="Models\PullRequestTextBufferInfo.cs" />
     <Compile Include="Services\IModelService.cs" />
     <Compile Include="Services\IGistPublishService.cs" />
+    <Compile Include="Services\IPullRequestEditorService.cs" />
     <Compile Include="Services\IPullRequestSession.cs" />
     <Compile Include="Services\IPullRequestService.cs" />
     <Compile Include="Services\IPullRequestSessionManager.cs" />
     <Compile Include="Services\IShowDialogService.cs" />
     <Compile Include="Services\LocalRepositoriesExtensions.cs" />
     <Compile Include="Services\ModelServiceExtensions.cs" />
+    <Compile Include="Services\PullRequestSessionExtensions.cs" />
     <Compile Include="ViewModels\Dialog\IDialogContentViewModel.cs" />
     <Compile Include="ViewModels\Dialog\IGitHubDialogWindowViewModel.cs" />
     <Compile Include="ViewModels\Dialog\IGistCreationViewModel.cs" />
@@ -133,6 +135,9 @@
     <Compile Include="ViewModels\GitHubPane\ILoggedOutViewModel.cs" />
     <Compile Include="ViewModels\GitHubPane\INavigationViewModel.cs" />
     <Compile Include="ViewModels\GitHubPane\IPanePageViewModel.cs" />
+    <Compile Include="ViewModels\GitHubPane\IPullRequestFilesViewModel.cs" />
+    <Compile Include="ViewModels\GitHubPane\IPullRequestReviewViewModel.cs" />
+    <Compile Include="ViewModels\GitHubPane\PullRequestDetailReviewItem.cs" />
     <Compile Include="ViewModels\GitHubPane\IPullRequestListViewModel.cs" />
     <Compile Include="ViewModels\GitHubPane\ISearchablePageViewModel.cs" />
     <Compile Include="ViewModels\GitHubPane\IPullRequestCreationViewModel.cs" />
