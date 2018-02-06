@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using Microsoft.VisualStudio.Shell;
-using GitHub.Services;
 
-namespace GitHub.TeamFoundation.Services
+namespace GitHub.Services.VisualStudio
 {
     [Export(typeof(IVSUIContextFactory))]
     class VSUIContextFactory : IVSUIContextFactory

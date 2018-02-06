@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.Composition;
 using GitHub.Models;
 
-namespace GitHub.TeamFoundation.Services
+namespace GitHub.Services
 {
     [Export(typeof(ILocalRepositoryModelFactory))]
     class LocalRepositoryModelFactory : ILocalRepositoryModelFactory
