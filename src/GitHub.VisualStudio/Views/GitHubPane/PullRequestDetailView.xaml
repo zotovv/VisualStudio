@@ -25,11 +25,6 @@
                 <sampleData:PullRequestDetailViewModelDesigner SourceBranchDisplayName="shana/error-handling-a-ridiculously-long-branch-name-because-why-not"
                                                                TargetBranchDisplayName="master-is-always-stable"
                                                                CommentCount="10">
-                    <!--
-                    <sampleData:PullRequestDetailViewModelDesigner.CheckoutState>
-                        <sampleData:PullRequestCheckoutStateDesigner Caption="Checkout error-handling/>
-                    </sampleData:PullRequestDetailViewModelDesigner.CheckoutState>
-                    -->
                     <sampleData:PullRequestDetailViewModelDesigner.UpdateState>
                         <sampleData:PullRequestUpdateStateDesigner CommitsAhead="0" CommitsBehind="0" UpToDate="True"/>
                     </sampleData:PullRequestDetailViewModelDesigner.UpdateState>
@@ -85,7 +80,7 @@
     <FrameworkElement.CommandBindings>
         <CommandBinding Command="{x:Static markdig:Commands.Hyperlink}" Executed="OpenHyperlink" />
     </FrameworkElement.CommandBindings>
-    
+
     <DockPanel Grid.IsSharedSizeScope="True" Margin="8 0">
         <Grid DockPanel.Dock="Top">
             <Grid.ColumnDefinitions>
@@ -242,22 +237,24 @@
                 </Grid.ColumnDefinitions>
 
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
                     <!-- Author and open time -->
                     <RowDefinition Height="Auto"/>
                     <!-- PR body -->
                     <RowDefinition Height="Auto"/>
                     <!-- View on github link -->
                     <RowDefinition Height="Auto"/>
+                    <!-- Reviewers -->
+                    <RowDefinition Height="Auto"/>
                     <!-- Files changed -->
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <!-- Author and open time -->
                 <StackPanel Margin="0 5 0 0" Orientation="Horizontal">
                     <controls:AccountAvatar Account="{Binding Model.Author}"
-                                            VerticalAlignment="Top"
+                                            VerticalAlignment="Bottom"
                                             Width="16"
-                                            Height="16"/>
+                                            Height="16" Margin="0,0,0,1"/>
 
                     <TextBlock VerticalAlignment="Center" Margin="4 0" TextWrapping="Wrap">
                         <Run FontWeight="Bold" Text="{Binding Model.Author.Login, Mode=OneWay}" />
@@ -275,6 +272,19 @@
                 <ui:GitHubActionLink Grid.Column="2" Grid.Row="2" Margin="0 6" Command="{Binding OpenOnGitHub}">
                     View conversation on GitHub
                 </ui:GitHubActionLink>
+
+                <ui:SectionControl Name="reviewsSection"
+                                   HeaderText="{x:Static prop:Resources.Reviewers}"
+                                   IsExpanded="True"
+                                   Grid.Row="3">
+                    <ItemsControl ItemsSource="{Binding Reviews}" Margin="0 4 12 4">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <local:PullRequestReviewSummaryView/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ui:SectionControl>
 
                 <!-- Files changed -->
                 <ui:SectionControl Name="changesSection" 
